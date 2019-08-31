@@ -10,6 +10,7 @@ enum MemberKind {
 
 interface MemberHierarchyNode extends IHierarchyNode {
   fieldName: string;
+  sizeOfMember: number;
   children: MemberHierarchyNode[];
 }
 
@@ -28,10 +29,14 @@ export class MemberHierarchyProvider extends Hierarchy<MemberHierarchyNode> {
     let fieldName: string = '';
     if (isNaN(off) || (parts.length < 3)) {
       fieldName = parts[1];
+      ti.tooltip = "";
     } else {
       fieldName = parts[2];
       ti.tooltip = `Offset: ${off} bytes`;
     }
+
+    if (element.sizeOfMember > 0)
+      ti.tooltip = `Size: ${element.sizeOfMember}; ${ti.tooltip}`;
 
     if (fieldName !== undefined) {
       ti.label = fieldName;

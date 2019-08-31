@@ -633,6 +633,11 @@
           "default": 15,
           "description": "Number of lines of the initializer / macro definition showed in hover."
         },
+        "ccls.index.determineTypeSizes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allows to obtain size for types during indexing (also for built-in types like int, char, ...). Basically a result of sizeof. By default is on"
+        },
         "ccls.codeLens.renderInline": {
           "type": "boolean",
           "default": false,
