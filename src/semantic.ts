@@ -195,12 +195,13 @@ export class SemanticContext implements Disposable {
 
     // Variables
     case SymbolKind.Field:
-      if (symbol.storage === StorageClass.Static)
-        return get('staticMemberVariable');
       return get('memberVariable');
     case SymbolKind.Variable:
-      if (symbol.storage === StorageClass.Static)
+      if (symbol.storage === StorageClass.Static) {
+        if (symbol.parentKind === SymbolKind.Class)
+          return get('staticMemberVariable');
         return get('staticVariable');
+      }
       if (symbol.parentKind === SymbolKind.File ||
           symbol.parentKind === SymbolKind.Namespace)
         return get('globalVariable');
