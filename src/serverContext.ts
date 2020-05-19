@@ -1,4 +1,4 @@
-import * as cp from "child_process";
+import * as cp from 'child_process';
 import {
   CancellationToken,
   CodeLens,
@@ -17,28 +17,28 @@ import {
   window,
   workspace,
   WorkspaceConfiguration,
-} from "vscode";
+} from 'vscode';
 import {
   LanguageClient,
   LanguageClientOptions,
   ProvideCodeLensesSignature,
   RevealOutputChannelOn,
   ServerOptions,
-} from "vscode-languageclient";
-import { Converter } from "vscode-languageclient/lib/protocolConverter";
-import * as ls from "vscode-languageserver-types";
+} from 'vscode-languageclient';
+import { Converter } from 'vscode-languageclient/lib/protocolConverter';
+import * as ls from 'vscode-languageserver-types';
 import * as WebSocket from 'ws';
-import { CclsErrorHandler } from "./cclsErrorHandler";
-import { cclsChan, logChan } from './globalContext';
-import { CallHierarchyProvider } from "./hierarchies/callHierarchy";
-import { InheritanceHierarchyProvider } from "./hierarchies/inheritanceHierarchy";
-import { MemberHierarchyProvider } from "./hierarchies/memberHierarchy";
-import { InactiveRegionsProvider } from "./inactiveRegions";
-import { PublishSemanticHighlightArgs, SemanticContext, semanticKinds } from "./semantic";
-import { StatusBarIconProvider } from "./statusBarIcon";
+import { CclsErrorHandler } from './cclsErrorHandler';
+import { cclsChan } from './globalContext';
+import { CallHierarchyProvider } from './hierarchies/callHierarchy';
+import { InheritanceHierarchyProvider } from './hierarchies/inheritanceHierarchy';
+import { MemberHierarchyProvider } from './hierarchies/memberHierarchy';
+import { InactiveRegionsProvider } from './inactiveRegions';
+import { PublishSemanticHighlightArgs, SemanticContext, semanticKinds } from './semantic';
+import { StatusBarIconProvider } from './statusBarIcon';
 import { ClientConfig, IHierarchyNode } from './types';
-import { disposeAll, normalizeUri, unwrap, wait } from "./utils";
-import { jumpToUriAtPosition } from "./vscodeUtils";
+import { disposeAll, normalizeUri, unwrap, wait } from './utils';
+import { jumpToUriAtPosition } from './vscodeUtils';
 
 interface LastGoto {
   id: any;
@@ -46,11 +46,11 @@ interface LastGoto {
 }
 
 function flatObjectImpl(obj: any, pref: string, result: Map<string, string>) {
-  if (typeof obj === "object") {
+  if (typeof obj === 'object') {
     for (const key of Object.keys(obj)) {
       const val = obj[key];
       const newpref = `${pref}.${key}`;
-      if (typeof val === "object" || val instanceof Array) {
+      if (typeof val === 'object' || val instanceof Array) {
         flatObjectImpl(val, newpref, result);
       } else {
         result.set(newpref, `${val}`);
@@ -60,7 +60,7 @@ function flatObjectImpl(obj: any, pref: string, result: Map<string, string>) {
     let idx = 0;
     for (const val of obj) {
       const newpref = `${pref}.${idx}`;
-      if (typeof val === "object" || val instanceof Array) {
+      if (typeof val === 'object' || val instanceof Array) {
         flatObjectImpl(val, newpref, result);
       } else {
         result.set(newpref, `${val}`);
@@ -70,7 +70,7 @@ function flatObjectImpl(obj: any, pref: string, result: Map<string, string>) {
   }
 }
 
-function flatObject(obj: any, pref = ""): Map<string, string> {
+function flatObject(obj: any, pref = ''): Map<string, string> {
   const result = new Map<string, string>();
   flatObjectImpl(obj, pref, result);
   return result;
@@ -81,8 +81,7 @@ function getClientConfig(wsRoot: string): ClientConfig {
     const config = workspace.getConfiguration('ccls');
     for (const kind of semanticKinds) {
       const face = config.get<string[]>(`highlight.${kind}.face`, []);
-      if (face.length > 0)
-        return true;
+      if (face.length > 0) return true;
     }
     return false;
   }
@@ -96,11 +95,11 @@ function getClientConfig(wsRoot: string): ClientConfig {
   }
 
   function resolveVariables(value: any) {
-    if (typeof(value) === 'string') {
+    if (typeof value === 'string') {
       return resolveVariablesInString(value);
     }
     if (Array.isArray(value)) {
-        return resloveVariablesInArray(value);
+      return resloveVariablesInArray(value);
     }
     return value;
   }
@@ -197,14 +196,11 @@ export class ServerContext implements Disposable {
     id: undefined,
   };
 
-  public constructor(
-    public readonly cwd: string,
-    lazyMode: boolean = false
-  ) {
+  public constructor(public readonly cwd: string, lazyMode: boolean = false) {
     this.cliConfig = getClientConfig(cwd);
     if (lazyMode) {
-      this.ignoredConf.push(".index.initialBlacklist");
-      this.cliConfig.index.initialBlacklist = [".*"];
+      this.ignoredConf.push('.index.initialBlacklist');
+      this.cliConfig.index.initialBlacklist = ['.*'];
     }
     workspace.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._dispose);
     this.client = this.initClient();
@@ -220,26 +216,38 @@ export class ServerContext implements Disposable {
     try {
       await this.client.onReady();
     } catch (e) {
-      window.showErrorMessage(`Failed to start ccls with command "${
-        this.cliConfig.launchCommand
-      }".`);
+      window.showErrorMessage(
+        `Failed to start ccls with command "${this.cliConfig.launchCommand}".`
+      );
     }
     // General commands.
-    this._dispose.push(commands.registerCommand("ccls.vars", this.makeRefHandler("$ccls/vars")));
-    this._dispose.push(commands.registerCommand("ccls.call", this.makeRefHandler("$ccls/call")));
-    this._dispose.push(commands.registerCommand("ccls.member", this.makeRefHandler("$ccls/member")));
-    this._dispose.push(commands.registerCommand(
-      "ccls.base", this.makeRefHandler("$ccls/inheritance", { derived: false }, true)));
-    this._dispose.push(commands.registerCommand("ccls.showXrefs", this.showXrefsHandlerCmd, this));
+    this._dispose.push(commands.registerCommand('ccls.vars', this.makeRefHandler('$ccls/vars')));
+    this._dispose.push(commands.registerCommand('ccls.call', this.makeRefHandler('$ccls/call')));
+    this._dispose.push(
+      commands.registerCommand('ccls.member', this.makeRefHandler('$ccls/member'))
+    );
+    this._dispose.push(
+      commands.registerCommand(
+        'ccls.base',
+        this.makeRefHandler('$ccls/inheritance', { derived: false }, true)
+      )
+    );
+    this._dispose.push(commands.registerCommand('ccls.showXrefs', this.showXrefsHandlerCmd, this));
 
     // The language client does not correctly deserialize arguments, so we have a
     // wrapper command that does it for us.
-    this._dispose.push(commands.registerCommand('ccls.showReferences', this.showReferencesCmd, this));
+    this._dispose.push(
+      commands.registerCommand('ccls.showReferences', this.showReferencesCmd, this)
+    );
     this._dispose.push(commands.registerCommand('ccls.goto', this.gotoCmd, this));
 
-    this._dispose.push(commands.registerCommand("ccls._applyFixIt", this.fixItCmd, this));
-    this._dispose.push(commands.registerCommand('ccls._autoImplement', this.autoImplementCmd, this));
-    this._dispose.push(commands.registerCommand('ccls._insertInclude', this.insertIncludeCmd, this));
+    this._dispose.push(commands.registerCommand('ccls._applyFixIt', this.fixItCmd, this));
+    this._dispose.push(
+      commands.registerCommand('ccls._autoImplement', this.autoImplementCmd, this)
+    );
+    this._dispose.push(
+      commands.registerCommand('ccls._insertInclude', this.insertIncludeCmd, this)
+    );
 
     const config = workspace.getConfiguration('ccls');
     if (config.get('misc.showInactiveRegions')) {
@@ -249,41 +257,41 @@ export class ServerContext implements Disposable {
 
     const inheritanceHierarchyProvider = new InheritanceHierarchyProvider(this.client);
     this._dispose.push(inheritanceHierarchyProvider);
-    this._dispose.push(window.registerTreeDataProvider(
-        "ccls.inheritanceHierarchy", inheritanceHierarchyProvider
-    ));
+    this._dispose.push(
+      window.registerTreeDataProvider('ccls.inheritanceHierarchy', inheritanceHierarchyProvider)
+    );
 
     const callHiearchyQualified = this.cliConfig.callHiearchyQualified;
-    const callHierarchyProvider =
-        new CallHierarchyProvider(this.client, callHiearchyQualified);
+    const callHierarchyProvider = new CallHierarchyProvider(this.client, callHiearchyQualified);
     this._dispose.push(callHierarchyProvider);
-    this._dispose.push(window.registerTreeDataProvider(
-        'ccls.callHierarchy', callHierarchyProvider
-    ));
+    this._dispose.push(
+      window.registerTreeDataProvider('ccls.callHierarchy', callHierarchyProvider)
+    );
 
     const memberHierarchyProvider = new MemberHierarchyProvider(this.client);
     this._dispose.push(memberHierarchyProvider);
-    this._dispose.push(window.registerTreeDataProvider(
-        'ccls.memberHierarchy', memberHierarchyProvider
-    ));
+    this._dispose.push(
+      window.registerTreeDataProvider('ccls.memberHierarchy', memberHierarchyProvider)
+    );
 
     // Common between tree views.
-    this._dispose.push(commands.registerCommand(
-        "ccls.gotoForTreeView", this.gotoForTreeView, this
-    ));
-    this._dispose.push(commands.registerCommand(
-        "ccls.hackGotoForTreeView", this.hackGotoForTreeView, this
-    ));
+    this._dispose.push(
+      commands.registerCommand('ccls.gotoForTreeView', this.gotoForTreeView, this)
+    );
+    this._dispose.push(
+      commands.registerCommand('ccls.hackGotoForTreeView', this.hackGotoForTreeView, this)
+    );
 
     // Semantic highlight
     const semantic = new SemanticContext();
     this._dispose.push(semantic);
-    this.client.onNotification('$ccls/publishSemanticHighlight',
-        (args: PublishSemanticHighlightArgs) => semantic.publishSemanticHighlight(args)
+    this.client.onNotification(
+      '$ccls/publishSemanticHighlight',
+      (args: PublishSemanticHighlightArgs) => semantic.publishSemanticHighlight(args)
     );
-    this._dispose.push(commands.registerCommand(
-        'ccls.navigate', this.makeNavigateHandler('$ccls/navigate')
-    ));
+    this._dispose.push(
+      commands.registerCommand('ccls.navigate', this.makeNavigateHandler('$ccls/navigate'))
+    );
 
     const interval = this.cliConfig.statusUpdateInterval;
     if (interval) {
@@ -291,14 +299,20 @@ export class ServerContext implements Disposable {
       this._dispose.push(statusBarIconProvider);
     }
 
-    this._dispose.push(commands.registerCommand("ccls.reload", this.reloadIndex, this));
+    this._dispose.push(commands.registerCommand('ccls.reload', this.reloadIndex, this));
   }
 
   public async stop() {
     const pid = unwrap(this.clientPid);
     const serverResponds = await Promise.race([
-      (async () => { await wait(300); return false; })(),
-      (async () => { await this.client.stop(); return true; })()
+      (async () => {
+        await wait(300);
+        return false;
+      })(),
+      (async () => {
+        await this.client.stop();
+        return true;
+      })(),
     ]);
     // waitpid was called in client.stop
     if (!serverResponds) {
@@ -313,8 +327,11 @@ export class ServerContext implements Disposable {
   }
 
   private reloadIndex() {
-    this.client.sendNotification(
-        '$ccls/reload', {blacklist: [], dependencies: true, whilelist: []});
+    this.client.sendNotification('$ccls/reload', {
+      blacklist: [],
+      dependencies: true,
+      whilelist: [],
+    });
   }
 
   private async onDidChangeConfiguration() {
@@ -332,8 +349,7 @@ export class ServerContext implements Disposable {
         const message = `Please restart server to apply the "ccls${key}" configuration change.`;
 
         const selected = await window.showInformationMessage(message, kRestart);
-        if (selected === kRestart)
-          commands.executeCommand('ccls.restart');
+        if (selected === kRestart) commands.executeCommand('ccls.restart');
         break;
       }
     }
@@ -346,8 +362,7 @@ export class ServerContext implements Disposable {
   ): Promise<CodeLens[]> {
     const config = workspace.getConfiguration('ccls');
     const enableCodeLens = config.get('codeLens.enabled');
-    if (!enableCodeLens)
-      return [];
+    if (!enableCodeLens) return [];
     const enableInlineCodeLens = config.get('codeLens.renderInline', false);
     if (!enableInlineCodeLens) {
       const uri = document.uri;
@@ -360,29 +375,22 @@ export class ServerContext implements Disposable {
       });
       const lenses = this.p2c.asCodeLenses(lensesObjs);
       return lenses.map((lense: CodeLens) => {
-        const cmd  = lense.command;
+        const cmd = lense.command;
         if (cmd && cmd.command === 'ccls.xref') {
           // Change to a custom command which will fetch and then show the results
           cmd.command = 'ccls.showXrefs';
-          cmd.arguments = [
-            uri,
-            lense.range.start,
-            cmd.arguments,
-          ];
+          cmd.arguments = [uri, lense.range.start, cmd.arguments];
         }
         return this.p2c.asCodeLens(lense);
       });
     }
 
     // We run the codeLens request ourselves so we can intercept the response.
-    const a = await this.client.sendRequest<ls.CodeLens[]>(
-      'textDocument/codeLens',
-      {
-        textDocument: {
-          uri: document.uri.toString(true),
-        },
-      }
-    );
+    const a = await this.client.sendRequest<ls.CodeLens[]>('textDocument/codeLens', {
+      textDocument: {
+        uri: document.uri.toString(true),
+      },
+    });
     const result: CodeLens[] = this.p2c.asCodeLenses(a);
     this.displayCodeLens(document, result);
     return [];
@@ -399,15 +407,13 @@ export class ServerContext implements Disposable {
 
     const codeLensDecoration = window.createTextEditorDecorationType(decorationOpts);
     for (const editor of window.visibleTextEditors) {
-      if (editor.document !== document)
-        continue;
+      if (editor.document !== document) continue;
 
       const opts: DecorationOptions[] = [];
 
       for (const codeLens of allCodeLens) {
         // FIXME: show a real warning or disable on-the-side code lens.
-        if (!codeLens.isResolved)
-          console.error('Code lens is not resolved');
+        if (!codeLens.isResolved) console.error('Code lens is not resolved');
 
         // Default to after the content.
         let position = codeLens.range.end;
@@ -420,8 +426,9 @@ export class ServerContext implements Disposable {
         const range = new Range(position, position);
         const opt: DecorationOptions = {
           range,
-          renderOptions:
-              {after: {contentText: ' ' + unwrap(codeLens.command, "lens").title + ' '}}
+          renderOptions: {
+            after: { contentText: ' ' + unwrap(codeLens.command, 'lens').title + ' ' },
+          },
         };
 
         opts.push(opt);
@@ -455,7 +462,9 @@ export class ServerContext implements Disposable {
         return false;
       },
       initializationOptions: this.cliConfig,
-      middleware: {provideCodeLenses: (doc, next, token) => this.provideCodeLens(doc, next, token)},
+      middleware: {
+        provideCodeLenses: (doc, next, token) => this.provideCodeLens(doc, next, token),
+      },
       outputChannel: cclsChan,
       revealOutputChannelOn: RevealOutputChannelOn.Never,
     };
@@ -476,10 +485,18 @@ export class ServerContext implements Disposable {
           }
           log = '';
         },
-        clear() {/**/},
-        show() {/**/},
-        hide() {/**/},
-        dispose() { socket.close(); }
+        clear() {
+          /**/
+        },
+        show() {
+          /**/
+        },
+        hide() {
+          /**/
+        },
+        dispose() {
+          socket.close();
+        },
       };
     }
 
@@ -487,47 +504,44 @@ export class ServerContext implements Disposable {
     return new LanguageClient('ccls', 'ccls', serverOptions, clientOptions);
   }
 
-  private makeRefHandler(
-    methodName: string, extraParams: object = {},
-    autoGotoIfSingle = false) {
-      return async (userParams: any) => {
-        /*
+  private makeRefHandler(methodName: string, extraParams: object = {}, autoGotoIfSingle = false) {
+    return async (userParams: any) => {
+      /*
         userParams: a dict defined as `args` in keybindings.json (or passed by other extensions like VSCodeVIM)
         Values defined by user have higher priority than `extraParams`
         */
-        const editor = unwrap(window.activeTextEditor, "window.activeTextEditor");
-        const position = editor.selection.active;
-        const uri = editor.document.uri;
-        const locations = await this.client.sendRequest<Array<ls.Location>>(
-          methodName,
-          {
-            position,
-            textDocument: {
-              uri: uri.toString(true),
-            },
-            ...extraParams,
-            ...userParams
-          }
+      const editor = unwrap(window.activeTextEditor, 'window.activeTextEditor');
+      const position = editor.selection.active;
+      const uri = editor.document.uri;
+      const locations = await this.client.sendRequest<Array<ls.Location>>(methodName, {
+        position,
+        textDocument: {
+          uri: uri.toString(true),
+        },
+        ...extraParams,
+        ...userParams,
+      });
+      if (autoGotoIfSingle && locations.length === 1) {
+        const location = this.p2c.asLocation(locations[0]);
+        commands.executeCommand('ccls.goto', location.uri, location.range.start, []);
+      } else {
+        commands.executeCommand(
+          'editor.action.showReferences',
+          uri,
+          position,
+          locations.map(this.p2c.asLocation)
         );
-        if (autoGotoIfSingle && locations.length === 1) {
-          const location = this.p2c.asLocation(locations[0]);
-          commands.executeCommand(
-              'ccls.goto', location.uri, location.range.start, []);
-        } else {
-          commands.executeCommand(
-              'editor.action.showReferences', uri, position,
-              locations.map(this.p2c.asLocation));
-        }
+      }
     };
   }
 
   private async showXrefsHandlerCmd(uri: Uri, position: Position, xrefArgs: any[]) {
     const locations = await commands.executeCommand<ls.Location[]>('ccls.xref', ...xrefArgs);
-    if (!locations)
-      return;
+    if (!locations) return;
     commands.executeCommand(
       'editor.action.showReferences',
-      uri, this.p2c.asPosition(position),
+      uri,
+      this.p2c.asPosition(position),
       locations.map(this.p2c.asLocation)
     );
   }
@@ -559,7 +573,7 @@ export class ServerContext implements Disposable {
         }
       });
       if (!success) {
-        window.showErrorMessage("Failed to apply FixIt");
+        window.showErrorMessage('Failed to apply FixIt');
       }
     }
 
@@ -574,8 +588,9 @@ export class ServerContext implements Disposable {
     // Failed, open new document.
     const d = await workspace.openTextDocument(Uri.parse(uri));
     const e = await window.showTextDocument(d);
-    if (!e) { // FIXME seems to be redundant
-      window.showErrorMessage("Failed to to get editor for FixIt");
+    if (!e) {
+      // FIXME seems to be redundant
+      window.showErrorMessage('Failed to to get editor for FixIt');
     }
 
     applyEdits(e);
@@ -587,28 +602,23 @@ export class ServerContext implements Disposable {
   }
 
   private async insertIncludeCmd(uri: string, pTextEdits: ls.TextEdit[]) {
-    if (pTextEdits.length === 1)
-      commands.executeCommand('ccls._applyFixIt', uri, pTextEdits);
+    if (pTextEdits.length === 1) commands.executeCommand('ccls._applyFixIt', uri, pTextEdits);
     else {
       class MyQuickPick implements QuickPickItem {
-        constructor(
-            public label: string, public description: string,
-            public edit: any) {}
+        constructor(public label: string, public description: string, public edit: any) {}
       }
       const items: Array<MyQuickPick> = [];
       for (const edit of pTextEdits) {
         items.push(new MyQuickPick(edit.newText, '', edit));
       }
       const selected = await window.showQuickPick(items);
-      if (!selected)
-        return;
+      if (!selected) return;
       commands.executeCommand('ccls._applyFixIt', uri, [selected.edit]);
     }
   }
 
   private async gotoForTreeView(node: IHierarchyNode) {
-    if (!node.location)
-      return;
+    if (!node.location) return;
 
     const parsedUri = Uri.parse(node.location.uri);
     const parsedPosition = this.p2c.asPosition(node.location.range.start);
@@ -616,12 +626,8 @@ export class ServerContext implements Disposable {
     return jumpToUriAtPosition(parsedUri, parsedPosition, true /*preserveFocus*/);
   }
 
-  private async hackGotoForTreeView(
-    node: IHierarchyNode,
-    hasChildren: boolean
-  ) {
-    if (!node.location)
-    return;
+  private async hackGotoForTreeView(node: IHierarchyNode, hasChildren: boolean) {
+    if (!node.location) return;
 
     if (!hasChildren) {
       commands.executeCommand('ccls.gotoForTreeView', node);
@@ -635,34 +641,27 @@ export class ServerContext implements Disposable {
     }
 
     const config = workspace.getConfiguration('ccls');
-    const kDoubleClickTimeMs =
-        config.get('treeViews.doubleClickTimeoutMs', 500);
+    const kDoubleClickTimeMs = config.get('treeViews.doubleClickTimeoutMs', 500);
     const elapsed = Date.now() - this.lastGoto.clockTime;
     this.lastGoto.clockTime = Date.now();
-    if (elapsed < kDoubleClickTimeMs)
-      commands.executeCommand('ccls.gotoForTreeView', node);
+    if (elapsed < kDoubleClickTimeMs) commands.executeCommand('ccls.gotoForTreeView', node);
   }
 
   private makeNavigateHandler(methodName: string) {
     return async (userParams: any) => {
-      const editor = unwrap(window.activeTextEditor, "window.activeTextEditor");
+      const editor = unwrap(window.activeTextEditor, 'window.activeTextEditor');
       const position = editor.selection.active;
       const uri = editor.document.uri;
-      const locations = await this.client.sendRequest<Array<ls.Location>>(
-        methodName,
-        {
-          position,
-          textDocument: {
-            uri: uri.toString(true),
-          },
-          ...userParams
-        }
-      );
+      const locations = await this.client.sendRequest<Array<ls.Location>>(methodName, {
+        position,
+        textDocument: {
+          uri: uri.toString(true),
+        },
+        ...userParams,
+      });
       if (locations.length === 1) {
         const location = this.p2c.asLocation(locations[0]);
-        await jumpToUriAtPosition(
-          location.uri, location.range.start,
-          false /*preserveFocus*/);
+        await jumpToUriAtPosition(location.uri, location.range.start, false /*preserveFocus*/);
       }
     };
   }

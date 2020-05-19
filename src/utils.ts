@@ -1,14 +1,13 @@
-import * as path from "path";
-import * as util from "util";
-import { commands, Disposable, Uri } from "vscode";
+import * as path from 'path';
+import * as util from 'util';
+import { commands, Disposable, Uri } from 'vscode';
 
 export function resourcePath(...paths: string[]): string {
-  return path.join(__dirname, "..", "resources", ...paths);
+  return path.join(__dirname, '..', 'resources', ...paths);
 }
 
-export function unwrap<T>(value: T|undefined, tip = "?"): T {
-  if (value === undefined)
-    throw new Error("undefined " + tip);
+export function unwrap<T>(value: T | undefined, tip = '?'): T {
+  if (value === undefined) throw new Error('undefined ' + tip);
   return value;
 }
 
@@ -21,7 +20,7 @@ export function normalizeUri(u: string): string {
 }
 
 export function setContext(name: string, value: any): void {
-  commands.executeCommand("setContext", name, value);
+  commands.executeCommand('setContext', name, value);
 }
 
 export function dedent(templateStrings: TemplateStringsArray, ...args: any[]) {

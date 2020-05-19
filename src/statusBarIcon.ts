@@ -1,8 +1,8 @@
-import { StatusBarAlignment, StatusBarItem, window } from "vscode";
-import { Disposable } from "vscode-jsonrpc";
-import { LanguageClient } from "vscode-languageclient";
+import { StatusBarAlignment, StatusBarItem, window } from 'vscode';
+import { Disposable } from 'vscode-jsonrpc';
+import { LanguageClient } from 'vscode-languageclient';
 import { cclsChan } from './globalContext';
-import { dedent, unwrap } from './utils';
+import { unwrap } from './utils';
 
 interface CclsInfoResponse {
   db: {
@@ -28,8 +28,8 @@ export class StatusBarIconProvider implements Disposable {
 
   public constructor(private client: LanguageClient, private updateInterval: number) {
     this.icon = window.createStatusBarItem(StatusBarAlignment.Right);
-    this.icon.text = "ccls: loading";
-    this.icon.tooltip = "ccls is starting / loading project metadata";
+    this.icon.text = 'ccls: loading';
+    this.icon.tooltip = 'ccls is starting / loading project metadata';
     this.icon.show();
 
     this.timer = setInterval(this.updateStatus.bind(this), updateInterval);
@@ -43,22 +43,21 @@ export class StatusBarIconProvider implements Disposable {
   private async updateStatus() {
     let info: CclsInfoResponse;
     try {
-      info = await this.client.sendRequest<CclsInfoResponse>("$ccls/info");
+      info = await this.client.sendRequest<CclsInfoResponse>('$ccls/info');
       this.wasError = false;
     } catch (e) {
-      if (this.wasError)
-        return;
+      if (this.wasError) return;
       this.wasError = true;
-      this.icon.text = "ccls: error";
-      this.icon.color = "red";
-      this.icon.tooltip = "Failed to perform info request: " + (e as Error).message;
+      this.icon.text = 'ccls: error';
+      this.icon.color = 'red';
+      this.icon.tooltip = 'Failed to perform info request: ' + (e as Error).message;
       unwrap(cclsChan).show();
       return;
     }
     const lastIdle = info.pipeline.lastIdle || 0;
     const completed = info.pipeline.completed || 0;
     const enqueued = info.pipeline.enqueued || 0;
-    this.icon.color = "";
+    this.icon.color = '';
     this.icon.text = `ccls: ${completed}/${enqueued} jobs`;
     this.icon.tooltip = `${info.db.files} files,
 ${info.db.funcs} functions,

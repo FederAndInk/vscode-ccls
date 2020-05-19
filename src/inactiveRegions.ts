@@ -5,19 +5,17 @@ import {
   TextEditor,
   TextEditorDecorationType,
   window,
-  workspace
-} from "vscode";
-import { LanguageClient } from "vscode-languageclient";
-import { disposeAll, normalizeUri } from "./utils";
+  workspace,
+} from 'vscode';
+import { LanguageClient } from 'vscode-languageclient';
+import { disposeAll, normalizeUri } from './utils';
 
 export class InactiveRegionsProvider implements Disposable {
   private skippedRanges = new Map<string, Range[]>();
   private decorationType: TextEditorDecorationType;
   private _dispose: Disposable[] = [];
 
-  public constructor(
-    private client: LanguageClient
-  ) {
+  public constructor(private client: LanguageClient) {
     const config = workspace.getConfiguration('ccls');
     this.decorationType = window.createTextEditorDecorationType({
       dark: {
@@ -29,19 +27,21 @@ export class InactiveRegionsProvider implements Disposable {
         backgroundColor: config.get('theme.light.skippedRange.backgroundColor'),
         color: config.get('theme.light.skippedRange.textColor'),
       },
-      rangeBehavior: DecorationRangeBehavior.ClosedClosed
+      rangeBehavior: DecorationRangeBehavior.ClosedClosed,
     });
 
     // await this.client.onReady();
-    this.client.onNotification("$ccls/publishSkippedRanges", (args) => this.onSkippedRanges(args));
+    this.client.onNotification('$ccls/publishSkippedRanges', (args) => this.onSkippedRanges(args));
     this._dispose.push(
       window.onDidChangeActiveTextEditor((editor) => this.onChangeTextEditor(editor))
     );
 
     // This only got called during dispose, which perfectly matches our goal.
-    this._dispose.push(workspace.onDidCloseTextDocument(
-      (document) => this.skippedRanges.delete(document.uri.toString(true))
-    ));
+    this._dispose.push(
+      workspace.onDidCloseTextDocument((document) =>
+        this.skippedRanges.delete(document.uri.toString(true))
+      )
+    );
   }
 
   public dispose() {
@@ -49,8 +49,7 @@ export class InactiveRegionsProvider implements Disposable {
   }
 
   private onChangeTextEditor(editor?: TextEditor) {
-    if (!editor)
-      return;
+    if (!editor) return;
     const uri = editor.document.uri.toString(true);
     const range = this.skippedRanges.get(uri);
     if (range) {
@@ -58,7 +57,7 @@ export class InactiveRegionsProvider implements Disposable {
     }
   }
 
-  private onSkippedRanges({uri, skippedRanges}: {uri: string, skippedRanges: any[]}) {
+  private onSkippedRanges({ uri, skippedRanges }: { uri: string; skippedRanges: any[] }) {
     uri = normalizeUri(uri);
     let ranges = skippedRanges
       .map(this.client.protocol2CodeConverter.asRange)

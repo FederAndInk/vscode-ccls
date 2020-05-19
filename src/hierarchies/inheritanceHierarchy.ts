@@ -25,38 +25,42 @@ export class InheritanceHierarchyProvider extends Hierarchy<InheritanceHierarchy
   }
 
   public onTreeItem(ti: TreeItem, element: InheritanceHierarchyNode) {
-    if (element.isBaseLabel)
-      ti.description = undefined;
+    if (element.isBaseLabel) ti.description = undefined;
   }
 
   public async onGetChildren(
     element: InheritanceHierarchyNode
-    ): Promise<InheritanceHierarchyNode[]> {
+  ): Promise<InheritanceHierarchyNode[]> {
     const result = await this.languageClient.sendRequest<InheritanceHierarchyNode>(
-      '$ccls/inheritance', {
+      '$ccls/inheritance',
+      {
         derived: element.wantsDerived,
         hierarchy: true,
         id: element.id,
         kind: element.kind,
         levels: 1,
         qualified: false,
-    });
+      }
+    );
     element.children = result.children;
     result.children.map((c) => InheritanceHierarchySetWantsDerived(c, element.wantsDerived));
     return result.children;
   }
 
   protected async onReveal(uri: Uri, position: Position): Promise<InheritanceHierarchyNode> {
-    const entry = await this.languageClient.sendRequest<InheritanceHierarchyNode>('$ccls/inheritance', {
-      derived: true,
-      hierarchy: true,
-      levels: 1,
-      position,
-      qualified: false,
-      textDocument: {
-        uri: uri.toString(true),
-      },
-    });
+    const entry = await this.languageClient.sendRequest<InheritanceHierarchyNode>(
+      '$ccls/inheritance',
+      {
+        derived: true,
+        hierarchy: true,
+        levels: 1,
+        position,
+        qualified: false,
+        textDocument: {
+          uri: uri.toString(true),
+        },
+      }
+    );
     InheritanceHierarchySetWantsDerived(entry, true);
 
     const parentEntry = await this.languageClient.sendRequest<InheritanceHierarchyNode>(
@@ -81,8 +85,7 @@ export class InheritanceHierarchyProvider extends Hierarchy<InheritanceHierarchy
         numChildren: parentEntry.children.length,
         wantsDerived: false,
       };
-      InheritanceHierarchySetWantsDerived(
-          parentWrapper, false);
+      InheritanceHierarchySetWantsDerived(parentWrapper, false);
       entry.children.unshift(parentWrapper);
       entry.numChildren += 1;
     }

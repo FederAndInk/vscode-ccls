@@ -1,8 +1,8 @@
 import { commands, Disposable, OutputChannel, window, workspace } from 'vscode';
-import { ServerContext } from "./serverContext";
-import { disposeAll } from "./utils";
+import { ServerContext } from './serverContext';
+import { disposeAll } from './utils';
 
-export let cclsChan: OutputChannel|undefined;
+export let cclsChan: OutputChannel | undefined;
 
 export function logChan(msg: string) {
   if (!cclsChan) {
@@ -18,21 +18,21 @@ export class GlobalContext implements Disposable {
   private _server: ServerContext;
   private _isRunning = false;
   private _srvCwd: string;
-  public constructor(
-  ) {
+  public constructor() {
     this.chan = window.createOutputChannel('ccls');
     cclsChan = this.chan;
     this._dispose.push(this.chan);
 
     const wss = workspace.workspaceFolders;
-    if (!wss || wss.length === 0)
-      throw Error("No workspace opened");
+    if (!wss || wss.length === 0) throw Error('No workspace opened');
     this._srvCwd = wss[0].uri.fsPath;
     logChan(`Server CWD is ${this._srvCwd}`);
 
     this._server = new ServerContext(this._srvCwd);
     this._dispose.push(commands.registerCommand('ccls.restart', async () => this.restartCmd()));
-    this._dispose.push(commands.registerCommand('ccls.restartLazy', async () => this.restartCmd(true)));
+    this._dispose.push(
+      commands.registerCommand('ccls.restartLazy', async () => this.restartCmd(true))
+    );
   }
 
   public async dispose() {
@@ -41,8 +41,7 @@ export class GlobalContext implements Disposable {
   }
 
   public async startServer() {
-    if (this._isRunning)
-      throw new Error("Server is already running");
+    if (this._isRunning) throw new Error('Server is already running');
     await this._server.start();
     this._isRunning = true;
   }

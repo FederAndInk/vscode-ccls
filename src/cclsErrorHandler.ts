@@ -1,6 +1,6 @@
-import {window, WorkspaceConfiguration} from 'vscode';
-import {Message} from 'vscode-jsonrpc';
-import {CloseAction, ErrorAction, ErrorHandler} from 'vscode-languageclient';
+import { window, WorkspaceConfiguration } from 'vscode';
+import { Message } from 'vscode-jsonrpc';
+import { CloseAction, ErrorAction, ErrorHandler } from 'vscode-languageclient';
 import { logChan } from './globalContext';
 
 export class CclsErrorHandler implements ErrorHandler {
@@ -18,12 +18,13 @@ export class CclsErrorHandler implements ErrorHandler {
 
     if (notifyOnCrash) {
       window.showInformationMessage(
-          restart ? 'ccls has crashed; it has been restarted.' :
-                    'ccls has crashed; it has not been restarted.');
+        restart
+          ? 'ccls has crashed; it has been restarted.'
+          : 'ccls has crashed; it has not been restarted.'
+      );
     }
 
-    if (restart)
-      return CloseAction.Restart;
+    if (restart) return CloseAction.Restart;
     return CloseAction.DoNotRestart;
   }
 }

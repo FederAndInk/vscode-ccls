@@ -1,4 +1,4 @@
-import { commands, Position, TreeItem, Uri } from 'vscode';
+import { Position, TreeItem, Uri } from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/lib/main';
 import { IHierarchyNode } from '../types';
 import { Hierarchy } from './hierarchy';
@@ -16,17 +16,15 @@ interface MemberHierarchyNode extends IHierarchyNode {
 export class MemberHierarchyProvider extends Hierarchy<MemberHierarchyNode> {
   protected contextValue: string = 'extension.ccls.memberHierarchyVisible';
 
-  constructor(
-    languageClient: LanguageClient
-  ) {
+  constructor(languageClient: LanguageClient) {
     super(languageClient, 'ccls.memberHierarchy', 'ccls.closeMemberHierarchy');
   }
 
   public onTreeItem(ti: TreeItem, element: MemberHierarchyNode) {
-    const parts: string[]  = element.fieldName.trim().split(' ');
+    const parts: string[] = element.fieldName.trim().split(' ');
     const off: number = parseInt(parts[0], 10);
     let fieldName: string = '';
-    if (isNaN(off) || (parts.length < 3)) {
+    if (isNaN(off) || parts.length < 3) {
       fieldName = parts[1];
     } else {
       fieldName = parts[2];
@@ -52,18 +50,15 @@ export class MemberHierarchyProvider extends Hierarchy<MemberHierarchyNode> {
   }
 
   protected async onReveal(uri: Uri, position: Position): Promise<MemberHierarchyNode> {
-    return this.languageClient.sendRequest<MemberHierarchyNode>(
-      '$ccls/member',
-      {
-        hierarchy: true,
-        kind: MemberKind.Var,
-        levels: 2,
-        position,
-        qualified: false,
-        textDocument: {
-          uri: uri.toString(true),
-        },
-      }
-    );
+    return this.languageClient.sendRequest<MemberHierarchyNode>('$ccls/member', {
+      hierarchy: true,
+      kind: MemberKind.Var,
+      levels: 2,
+      position,
+      qualified: false,
+      textDocument: {
+        uri: uri.toString(true),
+      },
+    });
   }
 }

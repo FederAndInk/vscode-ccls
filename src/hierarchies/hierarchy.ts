@@ -8,7 +8,7 @@ import {
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
-  Uri
+  Uri,
 } from 'vscode';
 import { Disposable, LanguageClient } from 'vscode-languageclient/lib/main';
 import { IHierarchyNode } from '../types';
@@ -18,11 +18,14 @@ function nodeIsIncomplete(node: IHierarchyNode) {
   return node.children.length !== node.numChildren;
 }
 
-export abstract class Hierarchy<T extends IHierarchyNode> implements TreeDataProvider<IHierarchyNode>, Disposable {
+export abstract class Hierarchy<T extends IHierarchyNode>
+  implements TreeDataProvider<IHierarchyNode>, Disposable {
   protected abstract contextValue: string;
   protected _dispose: Disposable[] = [];
 
-  protected readonly onDidChangeEmitter: EventEmitter<IHierarchyNode> = new EventEmitter<IHierarchyNode>();
+  protected readonly onDidChangeEmitter: EventEmitter<IHierarchyNode> = new EventEmitter<
+    IHierarchyNode
+  >();
   // tslint:disable-next-line:member-ordering
   public readonly onDidChangeTreeData: Event<IHierarchyNode> = this.onDidChangeEmitter.event;
 
@@ -33,13 +36,8 @@ export abstract class Hierarchy<T extends IHierarchyNode> implements TreeDataPro
     revealCmdName: string,
     closeCmdName: string
   ) {
-
-    this._dispose.push(commands.registerTextEditorCommand(
-      revealCmdName, this.reveal, this
-    ));
-    this._dispose.push(commands.registerCommand(
-      closeCmdName, this.close, this
-    ));
+    this._dispose.push(commands.registerTextEditorCommand(revealCmdName, this.reveal, this));
+    this._dispose.push(commands.registerCommand(closeCmdName, this.close, this));
   }
 
   public dispose() {
@@ -55,10 +53,8 @@ export abstract class Hierarchy<T extends IHierarchyNode> implements TreeDataPro
       title: 'Goto',
     };
     if (element.numChildren > 0) {
-      if (element.children.length > 0)
-        ti.collapsibleState = TreeItemCollapsibleState.Expanded;
-      else
-        ti.collapsibleState = TreeItemCollapsibleState.Collapsed;
+      if (element.children.length > 0) ti.collapsibleState = TreeItemCollapsibleState.Expanded;
+      else ti.collapsibleState = TreeItemCollapsibleState.Collapsed;
     }
 
     const elpath = Uri.parse(element.location.uri).path;
@@ -70,12 +66,9 @@ export abstract class Hierarchy<T extends IHierarchyNode> implements TreeDataPro
   }
 
   public async getChildren(element?: T): Promise<IHierarchyNode[]> {
-    if (!this.root)
-      return [];
-    if (!element)
-      return [this.root];
-    if (!nodeIsIncomplete(element))
-      return element.children;
+    if (!this.root) return [];
+    if (!element) return [this.root];
+    if (!nodeIsIncomplete(element)) return element.children;
 
     return this.onGetChildren(element);
   }
