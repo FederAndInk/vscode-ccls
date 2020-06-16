@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as util from 'util';
-import { commands, Disposable, Uri } from 'vscode';
+import { commands, Disposable, TextDocument, TextEditor, Uri, window } from 'vscode';
 
 export function resourcePath(...paths: string[]): string {
   return path.join(__dirname, '..', 'resources', ...paths);
@@ -36,4 +36,35 @@ const setTimeoutPromised = util.promisify(setTimeout);
 
 export async function wait(millisecs: number) {
   return setTimeoutPromised(millisecs);
+}
+
+/**
+ * trim a string with a specified sequence
+ *
+ * @param str string to trim
+ * @param toRemove what to trim
+ */
+export function trim(str: string, toRemove: string): string {
+  if (toRemove.length == 0) {
+    return str;
+  }
+  let newBeg = 0;
+  let newEnd = str.length;
+  while (str.startsWith(toRemove, newBeg)) {
+    newBeg += toRemove.length;
+  }
+  while (str.endsWith(toRemove, newEnd)) {
+    newEnd -= toRemove.length;
+  }
+
+  return str.substring(newBeg, newEnd);
+}
+
+export function textDocumentToTextEditor(textDoc: TextDocument): TextEditor | undefined {
+  for (const textEditor of window.visibleTextEditors) {
+    if (textEditor.document == textDoc) {
+      return textEditor;
+    }
+  }
+  return undefined;
 }

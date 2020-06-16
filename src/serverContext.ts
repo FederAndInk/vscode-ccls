@@ -34,6 +34,7 @@ import { CallHierarchyProvider } from './hierarchies/callHierarchy';
 import { InheritanceHierarchyProvider } from './hierarchies/inheritanceHierarchy';
 import { MemberHierarchyProvider } from './hierarchies/memberHierarchy';
 import { InactiveRegionsProvider } from './inactiveRegions';
+import { InlineParameterHints } from './inlineParameterHints';
 import { PublishSemanticHighlightArgs, SemanticContext, semanticKinds } from './semantic';
 import { StatusBarIconProvider } from './statusBarIcon';
 import { ClientConfig, IHierarchyNode } from './types';
@@ -292,6 +293,8 @@ export class ServerContext implements Disposable {
     this._dispose.push(
       commands.registerCommand('ccls.navigate', this.makeNavigateHandler('$ccls/navigate'))
     );
+
+    this._dispose.push(new InlineParameterHints(this.client));
 
     const interval = this.cliConfig.statusUpdateInterval;
     if (interval) {
